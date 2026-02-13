@@ -10,8 +10,14 @@ from InversionResamplingStableDiffusionXLPipeline import InversionResamplingStab
 
 from guidance_classifier.ValenceArousalMidu import ValenceArousalMidu
 from datasets.CocoCaptions import CocoCaptions
-import diff_utils
 
+import diff_utils
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+MODELS_DIR = PROJECT_ROOT / "models"
+COCO_DIR = PROJECT_ROOT / "datasets/coco"
+OUTPUT_DIR = PROJECT_ROOT / "out"
 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -33,13 +39,13 @@ def main():
         }
     }
 
-    coco_directory = ""
+    
     num_inversion_steps = 50
     num_inference_steps = 50
     end_iteration = num_inversion_steps
     invert_no_cg = False
     normalize_gradient = True
-    is_xl = True
+    is_xl = False
     scheduler_type = "ddim"
     save_orig = False
 
@@ -59,20 +65,20 @@ def main():
     guidance_classifier = initialize_guidance_classifier(pipe.pipe, pipe.device, is_xl)
     pipe.guidance_classifier = guidance_classifier
 
-    adapt_coco_images(pipe, params, end_iteration, coco_directory, "", invert_no_cg, save_orig)
+    adapt_coco_images(pipe, params, end_iteration, COCO_DIR, OUTPUT_DIR, invert_no_cg, save_orig)
 
 
 def adapt_image(pipe, image_path, params, end_iteration=None, output_path=".", caption="", invert_no_cg=True,
-                save_orig=True, stats=None):
+                save_orig=True):
     image_name = image_path.split("/")[-1].replace(".jpg", "")
     input_image = PIL.Image.open(image_path)
     if input_image.mode != "RGB":
         input_image = input_image.convert("RGB")
 
-    orig_img_score, setting = get_score(pipe, input_image)
+    orig_img_score = get_score(pipe, input_image)
     print_score(orig_img_score, "original")
 
-    for adaptation, value in params.items():
+    for _ , value in params.items():
         if value["reference_value"] is not None:
             value["reference_value"] = get_reference_value_from_alpha(
                 value["reference_value"], orig_img_score, pipe.device)
@@ -81,12 +87,12 @@ def adapt_image(pipe, image_path, params, end_iteration=None, output_path=".", c
     if invert_no_cg:
         invert_manager = OutputImageManager(
             f'{output_path}/{image_name}_inverted.jpg', pipe, label="inverted", orig_score=orig_img_score,
-            orig_image=input_image, stats=stats)
+            orig_image=input_image)
         callback_resampling = invert_manager.callback
 
     img_path = f'{output_path}/{image_name}.jpg'
     output_manager = OutputImageManager(
-        img_path, pipe, orig_score=orig_img_score, orig_image=input_image, stats=stats, output_path=output_path)
+        img_path, pipe, orig_score=orig_img_score, orig_image=input_image, output_path=output_path)
     input_image, _ = pipe.revert_and_sample(input_image, caption, end_iteration, params,
                                             callback_resampling=callback_resampling,
                                             callback_outputs=output_manager.callback)
@@ -98,7 +104,6 @@ def adapt_image(pipe, image_path, params, end_iteration=None, output_path=".", c
 def adapt_coco_images(pipe, params, end_iteration, coco_directory, output_path=".", invert_no_cg=True, save_orig=False):
     dataset_test = CocoCaptions(coco_directory, "val", None)
     data_loader = torch.utils.data.DataLoader(dataset_test, batch_size=1, shuffle=True, num_workers=0)
-    neutral_captions = diff_utils.load_json("./caption_files/neutral_captions_val2017.json")
 
     ix = 0
     stats = {}
@@ -108,22 +113,16 @@ def adapt_coco_images(pipe, params, end_iteration, coco_directory, output_path="
 
         caption = data[2][0].split("/")[0]
 
-        # edit in key signalizes that the edited caption is taken
-        for key in params.keys():
-            if "edit" in key:
-                params[key]["prompt"] = neutral_captions[data[0][0]]
-
-        adapt_image(pipe, data[1][0], params, end_iteration, output_path, invert_no_cg=invert_no_cg, caption=caption,
-                    stats=stats, save_orig=save_orig)
+        adapt_image(pipe, data[1][0], params, end_iteration, output_path, invert_no_cg=invert_no_cg, caption=caption, save_orig=save_orig)
 
         print_stats(stats)
 
 
-def initialize_guidance_classifier(model_id, pipe, device, is_xl):
+def initialize_guidance_classifier(pipe, device, is_xl):
     if diff_utils.is_local():
         directory = "trained_models"
     else:
-        directory = "/data/cgebhard/classifiers"
+        directory = MODELS_DIR
         # directory = "/data1/chris/classifiers"
 
     # initialize guidance classifier
@@ -196,15 +195,13 @@ class OutputImageManager:
     Class managing results of pipeline
     """
 
-    def __init__(self, img_path, pipe, prompts=None, label=None, orig_score=None, orig_image=None, stats=None,
-                 output_path=None):
+    def __init__(self, img_path, pipe, prompts=None, label=None, orig_score=None, orig_image=None, output_path=None):
         self.image_path = img_path
         self.pipe = pipe
         self.prompts = prompts
         self.label = label
         self.orig_score = orig_score
         self.orig_image = orig_image
-        self.stats = stats
         self.output_path = output_path
 
     def callback(self, image, label=None):
@@ -224,7 +221,7 @@ class OutputImageManager:
 
         image.save(image_path)
         score = get_score(self.pipe, image, self.prompts)
-        delta = print_score(score, label, self.orig_score)
+        print_score(score, label, self.orig_score)
 
         rec_error = 0.0
         if self.orig_image is not None:
@@ -233,31 +230,6 @@ class OutputImageManager:
             # mean absolute error as reconstruction error
             rec_error = torch.mean(torch.abs(image_tensor - orig_image_tensor)).item()
             print("Reconstruction error: {:.4f}".format(rec_error))
-
-        if self.stats is not None:
-            if label not in self.stats:
-                self.stats[label] = {}
-                self.stats[label]["valence"] = []
-                self.stats[label]["delta_valence"] = []
-                self.stats[label]["arousal"] = []
-                self.stats[label]["delta_arousal"] = []
-                self.stats[label]["rec_error"] = []
-                # per image stats if necessary
-                self.stats[image_name + "/" + label] = {}
-
-            else:
-                self.stats[label]["valence"].append(score[0, 0].item())
-                self.stats[label]["delta_valence"].append(delta[0])
-                self.stats[label]["arousal"].append(score[0, 1].item())
-                self.stats[label]["delta_arousal"].append(delta[1])
-
-                self.stats[image_name + "/" + label]["valence"] = [score[0, 0].item()]
-                self.stats[image_name + "/" + label]["delta_valence"] = [delta[0]]
-                self.stats[image_name + "/" + label]["arousal"] = [score[0, 1].item()]
-                self.stats[image_name + "/" + label]["delta_arousal"] = [delta[1]]
-
-            self.stats[label]["rec_error"].append(rec_error)
-
 
 if __name__ == '__main__':
     main()
