@@ -1,3 +1,5 @@
+#! /usr/bin/env -S PYRHONPATH=.. uv run optimize_image_param.py
+
 import os
 
 import torch
@@ -11,7 +13,7 @@ from datasets.InstagramDataset import InstagramDataset
 from image_transformations.image_transformations import apply_params
 from losses.ValenceArousalLoss import ValenceArousalLoss
 
-from models.Discriminator import Discriminator
+from baselines.models.Discriminator import Discriminator
 
 from optimize_image import optimize_images, compute_clip_loss
 from run_img_trans import compare_emotions

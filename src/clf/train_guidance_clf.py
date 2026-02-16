@@ -16,7 +16,7 @@ from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline, DDIMSc
 from diffusers.optimization import get_cosine_schedule_with_warmup
 from torchvision import transforms
 
-from ClfWrapper import ClfWrapper
+from src.clf.ClfWrapper import ClfWrapper
 from guidance_classifier.ValenceLatents import ValenceLatents
 from guidance_classifier.ValenceMidu import ValenceMidu
 from guidance_classifier.ValenceArousalLatents import ValenceArousalLatents
@@ -24,7 +24,7 @@ from guidance_classifier.ValenceArousalMidu import ValenceArousalMidu
 from guidance_classifier.IntensityLatents import IntensityLatents
 from guidance_classifier.IntensityMidu import IntensityMidu
 
-import diff_utils
+import pipelines.diff_utils as diff_utils
 IS_LOCAL = diff_utils.is_local()
 
 # setting path

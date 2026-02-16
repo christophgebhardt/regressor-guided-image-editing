@@ -1,10 +1,10 @@
 import math
 import torch
-import diff_utils
+import pipelines.diff_utils as diff_utils
 from tqdm.auto import tqdm
 from diffusers import StableDiffusionPipeline
 
-from InversionResamplingDiffusionPipeline import InversionResamplingDiffusionPipeline
+from pipelines.InversionResamplingDiffusionPipeline import InversionResamplingDiffusionPipeline
 
 
 class InversionResamplingStableDiffusionPipeline(InversionResamplingDiffusionPipeline):
@@ -14,7 +14,7 @@ class InversionResamplingStableDiffusionPipeline(InversionResamplingDiffusionPip
     """
 
     def __init__(self, num_inference_steps: int, num_inversion_steps: int = None,
-                 pipe_path: str = "Manojb/stable-diffusion-2-1-base", device: str = 'cuda',
+                 pipe_path: str = "stabilityai/sd-turbo", device: str = 'cuda',
                  scheduler_type: str = 'dpm', normalize_gradient: bool = True):
         # Load the SD pipeline and add a hook
         super().__init__(num_inference_steps, num_inversion_steps, device=device, normalize_gradient=normalize_gradient)

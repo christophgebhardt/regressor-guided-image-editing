@@ -4,7 +4,7 @@ from torch import Tensor
 from diffusers import StableDiffusionXLPipeline
 
 from guidance_classifier.GuidanceClassifier import GuidanceClassifier
-from diff_utils import get_prompt_embeddings_sd, get_prompt_embeddings_sdxl
+from pipelines.diff_utils import get_prompt_embeddings_sd, get_prompt_embeddings_sdxl
 
 
 class MiduClassifier(GuidanceClassifier):

@@ -1,3 +1,5 @@
+#! /usr/bin/env -S uv run adapt_images.py
+
 from __future__ import print_function
 from __future__ import division
 import os
@@ -5,16 +7,16 @@ import torch
 import PIL.Image
 import numpy as np
 
-from InversionResamplingStableDiffusionPipeline import InversionResamplingStableDiffusionPipeline
-from InversionResamplingStableDiffusionXLPipeline import InversionResamplingStableDiffusionXLPipeline
+from pipelines.InversionResamplingStableDiffusionPipeline import InversionResamplingStableDiffusionPipeline
+from pipelines.InversionResamplingStableDiffusionXLPipeline import InversionResamplingStableDiffusionXLPipeline
 
 from guidance_classifier.ValenceArousalMidu import ValenceArousalMidu
 from datasets.CocoCaptions import CocoCaptions
 
-import diff_utils
+import pipelines.diff_utils as diff_utils
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent # src folder
 MODELS_DIR = PROJECT_ROOT / "models"
 COCO_DIR = PROJECT_ROOT / "datasets/coco"
 OUTPUT_DIR = PROJECT_ROOT / "out"
@@ -40,8 +42,8 @@ def main():
     }
 
     
-    num_inversion_steps = 50
-    num_inference_steps = 50
+    num_inversion_steps = 5
+    num_inference_steps = 5
     end_iteration = num_inversion_steps
     invert_no_cg = False
     normalize_gradient = True

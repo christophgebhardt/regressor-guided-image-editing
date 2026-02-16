@@ -2,8 +2,8 @@ import torch
 from tqdm.auto import tqdm
 from diffusers import StableDiffusionXLPipeline
 
-from diff_utils import decode_to_pil, get_prompt_embeddings_sdxl
-from InversionResamplingDiffusionPipeline import InversionResamplingDiffusionPipeline
+from pipelines.diff_utils import decode_to_pil, get_prompt_embeddings_sdxl
+from pipelines.InversionResamplingDiffusionPipeline import InversionResamplingDiffusionPipeline
 
 
 class InversionResamplingStableDiffusionXLPipeline(InversionResamplingDiffusionPipeline):
