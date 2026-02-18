@@ -14,12 +14,8 @@ from guidance_classifier.ValenceArousalMidu import ValenceArousalMidu
 from datasets.CocoCaptions import CocoCaptions
 
 import pipelines.diff_utils as diff_utils
-from pathlib import Path
+from paths import MODELS_DIR, COCO_DIR, IMAGE_OUTPUT_DIR
 
-PROJECT_ROOT = Path(__file__).resolve().parent # src folder
-MODELS_DIR = PROJECT_ROOT / "models"
-COCO_DIR = PROJECT_ROOT / "datasets/coco"
-OUTPUT_DIR = PROJECT_ROOT / "out"
 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -67,7 +63,7 @@ def main():
     guidance_classifier = initialize_guidance_classifier(pipe.pipe, pipe.device, is_xl)
     pipe.guidance_classifier = guidance_classifier
 
-    adapt_coco_images(pipe, params, end_iteration, COCO_DIR, OUTPUT_DIR, invert_no_cg, save_orig)
+    adapt_coco_images(pipe, params, end_iteration, COCO_DIR, IMAGE_OUTPUT_DIR, invert_no_cg, save_orig)
 
 
 def adapt_image(pipe, image_path, params, end_iteration=None, output_path=".", caption="", invert_no_cg=True,
