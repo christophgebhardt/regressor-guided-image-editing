@@ -3,8 +3,8 @@ import torch.nn as nn
 from torchvision import models
 from torchvision import transforms
 
-from models.utilities.ReplicateAndCrop import ReplicateAndCrop
-from models.utilities.MeanReplicatedCrops import MeanReplicatedCrops
+from baselines.models.utilities.ReplicateAndCrop import ReplicateAndCrop
+from baselines.models.utilities.MeanReplicatedCrops import MeanReplicatedCrops
 
 
 def load_model_eval(path_to_model, num_classes, input_size=None, crop_size=None, normalize=False,

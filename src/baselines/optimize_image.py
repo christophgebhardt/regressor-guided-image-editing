@@ -1,4 +1,3 @@
-import os
 import torch
 import yaml
 import clip
@@ -7,9 +6,9 @@ from tqdm.auto import tqdm
 from torchvision import transforms
 from scipy.optimize import minimize
 
-from utils import plot_imgs_tensor, has_display
+from baselines.utils import plot_imgs_tensor, has_display
 from datasets.CocoCaptions import CocoCaptions
-from datasets.InstagramDataset import InstagramDataset
+
 
 
 def optimize_images(data_loader, params, initialize, objective_function, device, output_path, output_transform,
@@ -18,7 +17,7 @@ def optimize_images(data_loader, params, initialize, objective_function, device,
     ix = 0
     for image, image_path in data_loader:
         image = image.to(device)
-        if isinstance(data_loader.dataset, CocoCaptions) or isinstance(data_loader.dataset, InstagramDataset):
+        if isinstance(data_loader.dataset, CocoCaptions):
             image_path = image_path[1]
 
         print(f"[ {ix + 1} / {len(data_loader.dataset)} ]: {image_path[0]} \n")
@@ -51,17 +50,7 @@ def optimize_images(data_loader, params, initialize, objective_function, device,
                 plot_imgs_tensor(torch.cat((image_save, image_adapted), dim=0), ["original", adaptation])
 
             if is_save_output:
-                if isinstance(data_loader.dataset, InstagramDataset):
-                    # relative_path = "/".join(image_path[0].split("OriginalPosts", 1)[-1].split("/")[0:-1])
-                    # output_path_tmp = output_path + relative_path
-
-                    output_path_tmp = output_path + "/" + adaptation
-                    if not os.path.exists(output_path_tmp):
-                        os.makedirs(output_path_tmp)
-                else:
-                    output_path_tmp = output_path
-
-                save_output(output_path_tmp, image_path[0], image_save, image_adapted, adaptation, save_orig_img)
+                save_output(output_path, image_path[0], image_save, image_adapted, adaptation, save_orig_img)
 
 
 def optimization(x0, params, objective_function, learning_rate=0.1, lr_rampdown_length=0.25,

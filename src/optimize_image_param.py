@@ -1,4 +1,4 @@
-#! /usr/bin/env -S PYRHONPATH=.. uv run optimize_image_param.py
+#! /usr/bin/env -S uv run optimize_image_param.py
 
 import os
 
@@ -8,19 +8,20 @@ import torch.nn as nn
 from torchvision import transforms
 
 from datasets.CocoCaptions import CocoCaptions
-from datasets.InstagramDataset import InstagramDataset
 
-from image_transformations.image_transformations import apply_params
-from losses.ValenceArousalLoss import ValenceArousalLoss
-
+from baselines.image_transformations.image_transformations import apply_params
+from baselines.losses.ValenceArousalLoss import ValenceArousalLoss
 from baselines.models.Discriminator import Discriminator
+from baselines.optimize_image import optimize_images, compute_clip_loss
+from baselines.run_img_trans import compare_emotions
+from baselines.utils import check_init_stats_adapt, print_stats, is_local, get_str_timestamp
 
-from optimize_image import optimize_images, compute_clip_loss
-from run_img_trans import compare_emotions
-from utils import check_init_stats_adapt, print_stats, is_local, get_str_timestamp
+from paths import COCO_DIR, OPTIMIZED_OUTPUT_DIR
 
 STATS = {}
 OUTPUT_TRANSFORM = None
+
+output_path = OPTIMIZED_OUTPUT_DIR
 
 
 def main():
@@ -57,7 +58,7 @@ def main():
     # parameters: end
 
     # inputs
-    va_loss = ValenceArousalLoss("trained_models/va_pred_all", device, 1,
+    va_loss = ValenceArousalLoss("models/va_pred_all", device, 1,
                                  is_minimized=True, requires_grad=not is_gradient_free)
     eval_params = {"emotion_type_labels": None}
     # va_loss = ValenceArousalLoss("trained_models/EmoNet_valence_moments_resnet50_5_best.pth.tar",
@@ -79,23 +80,10 @@ def main():
         transforms.ToTensor()
     ])
 
-    if is_local():
-        base_directory = "/media/chris/Elements/GitRepos/SocialMediaExperimentalPlatform/Media/Instagram/OriginalPosts"
-        # base_directory = "./coco"
-        output_path = "./NAPS_PARAM"
-        # output_path = "./Test"
-    else:
-        # base_directory = "/data/cgebhard/NAPS"
-        # base_directory = "/data/cgebhard/coco"
-        # output_path = "/data/cgebhard/COCO_PARAM"
-        base_directory = "/data/cgebhard/OriginalPosts"
-        # output_path = f"/data/cgebhard/feeds_data/param_{get_str_timestamp()}"
-        output_path = "/data/cgebhard/relative_change/param"
 
-    # dataset_test = NAPSDataset(base_directory, data_transforms, json_file="../diffusion-guidance/caption_files/NAPS_images.json")
-    # dataset_test = ImageDirectoryDataset(base_directory, data_transforms)
-    # dataset_test = CocoCaptions(base_directory, "val", data_transforms)
-    dataset_test = InstagramDataset(base_directory, data_transforms)
+
+
+    dataset_test = CocoCaptions(COCO_DIR, "val", data_transforms)
     data_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=0)
 
     net = None
@@ -109,10 +97,7 @@ def main():
         net = net.to(device)
 
     for weight_clf in weight_clf_list:
-        if isinstance(dataset_test, InstagramDataset):
-            output_path_i = output_path
-        else:
-            output_path_i = f'{output_path}_{weight_clf:<1.2f}'
+        output_path_i = f'{output_path}_{weight_clf:<1.2f}'
 
         if not os.path.exists(output_path_i):
             os.makedirs(output_path_i)

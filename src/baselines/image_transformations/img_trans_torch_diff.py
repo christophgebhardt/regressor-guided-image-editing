@@ -1,7 +1,6 @@
 import torch
-import math
 import numpy as np
-from image_transformations.color_transformations import rgb2hsv_torch, hsv2rgb_torch, rgb2lum, lerp
+from baselines.image_transformations.color_transformations import rgb2hsv_torch, hsv2rgb_torch, rgb2lum, lerp
 
 
 def apply_curve_adjustment(im, param, normalize=False):

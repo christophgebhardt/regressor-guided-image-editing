@@ -1,8 +1,8 @@
 import torch
 from torch import Tensor
-from losses.EmotionImageLoss import EmotionImageLoss
-from models.EmotionPredictionModel import load_model_eval
-from models.EmoNet import load_model_eval as load_model_eval_emo_net
+from baselines.losses.EmotionImageLoss import EmotionImageLoss
+from baselines.models.EmotionPredictionModel import load_model_eval
+from baselines.models.EmoNet import load_model_eval as load_model_eval_emo_net
 
 
 class ValenceArousalLoss(EmotionImageLoss):

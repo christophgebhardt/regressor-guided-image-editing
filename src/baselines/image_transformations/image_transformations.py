@@ -1,6 +1,6 @@
 import torch
 import kornia
-import image_transformations.img_trans_torch_diff as ittf
+import baselines.image_transformations.img_trans_torch_diff as ittf
 import math
 
 
