@@ -1,35 +1,28 @@
+#! /usr/bin/env -S uv run optimize_image_imaginaire.py
+
 import os
 import sys
 import torch
 from torchvision import transforms
 
-from datasets.NAPSDataset import NAPSDataset
 from datasets.CocoCaptions import CocoCaptions
-from datasets.ImageDirectoryDataset import ImageDirectoryDataset
-from datasets.InstagramDataset import InstagramDataset
 
-from losses.ValenceArousalLoss import ValenceArousalLoss
+from baselines.losses.ValenceArousalLoss import ValenceArousalLoss
+from baselines.optimize_image import optimize_images
+from baselines.run_img_trans import compare_emotions
+from baselines.utils import check_init_stats_adapt, print_stats
 
-from optimize_image import optimize_images, compute_clip_loss
-from run_img_trans import compare_emotions
-from utils import is_local, check_init_stats_adapt, print_stats
+from external.imaginaire.discriminators.munit import Discriminator
+from external.imaginaire.generators.munit import Generator
+from external.imaginaire.losses.gan import GANLoss
+from external.imaginaire.config import Config
 
-# setting path
-IS_LOCAL = is_local()
-if IS_LOCAL:
-    PATH_IMAGINAIRE = '/home/cgebhard/GitRepos/imaginaire'
-else:
-    PATH_IMAGINAIRE = '/local/home/cgebhard/imaginaire'
-
-sys.path.append(PATH_IMAGINAIRE)
-from imaginaire.discriminators.munit import Discriminator
-from imaginaire.generators.munit import Generator
-from imaginaire.losses.gan import GANLoss
-from imaginaire.config import Config
+from paths import COCO_DIR, IMAGINAIRE_OUTPUT_DIR
 
 
 STATS = {}
 
+output_path = IMAGINAIRE_OUTPUT_DIR
 
 def main():
     # parameters
@@ -59,14 +52,10 @@ def main():
     # parameters: end
 
     # inputs
-    va_loss = ValenceArousalLoss("trained_models/va_pred_all", device, 1,
+    va_loss = ValenceArousalLoss("models/va_pred_all", device, 1,
                                  is_input_range_0_1=False, is_minimized=True, requires_grad=not is_gradient_free)
     eval_params = {"emotion_type_labels": None}
-    # va_loss = ValenceArousalLoss(
-    #     "trained_models/EmoNet_valence_moments_resnet50_5_best.pth.tar", device, 1,
-    #     is_input_range_0_1=False, is_minimized=True, requires_grad=not is_gradient_free, loss="valence"
-    # )
-    # eval_params = {"emotion_type_labels": ['Valence']}
+
 
     data_transforms = transforms.Compose([
         transforms.Resize(input_size),
@@ -76,29 +65,14 @@ def main():
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
     ])
 
-    if IS_LOCAL:
-        # base_directory = "../GitRepos/SocialMediaExperimentalPlatform/Media/NAPS"
-        base_directory = "./coco"
-        output_path = "./COCO_GAN"
-    else:
-        # base_directory = "/data/cgebhard/NAPS"
-        # base_directory = "/data/cgebhard/coco"
-        base_directory = "/data/cgebhard/OriginalPosts"
-        # output_path = "/data/cgebhard/feeds_data/gan_s5"
-        output_path = "/data/cgebhard/relative_change/gan"
 
-    # dataset_test = NAPDSDataset(base_directory, data_transforms)
-    # dataset_test = ImageDirectoryDataset(base_directory, data_transforms)
-    # dataset_test = CocoCaptions(base_directory, "val", data_transforms)
-    dataset_test = InstagramDataset(base_directory, data_transforms)
+
+    dataset_test = CocoCaptions(COCO_DIR, "val", data_transforms)
     data_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=0)
 
     cfg = Config("munit/imagenet2imagenet.yaml")
     gen = Generator(cfg.gen, cfg.data)
-    # state_dict = torch.load("trained_models/imaginaire_munit_100000.pt")
-    # state_dict = torch.load("trained_models/imaginaire_munit_200000_s4.pt")
-    # state_dict = torch.load("trained_models/imaginaire_munit_neutral_2_high.pt")
-    state_dict = torch.load("trained_models/imaginaire_munit_200000_s5.pt")
+    state_dict = torch.load("models/imaginaire_munit_200000_s5.pt")
     gen_sate_dict = get_relevant_states(state_dict['net_G'])
     gen.load_state_dict(gen_sate_dict)
     gen = gen.to(device)
@@ -113,10 +87,7 @@ def main():
         gan_loss = GANLoss(cfg.trainer.gan_mode)
 
     for weight_clf in weight_clf_list:
-        if isinstance(dataset_test, InstagramDataset):
-            output_path_i = output_path
-        else:
-            output_path_i = f'{output_path}_{weight_clf:<1.2f}'
+        output_path_i = f'{output_path}/weight_{weight_clf:<1.2f}'
 
         if not os.path.exists(output_path_i):
             os.makedirs(output_path_i)
@@ -168,15 +139,7 @@ def objective_function_imaginaire(x_opt, gen, orig_image, content, clf, weight_c
         # L1 reconstruction on content as used in imaginaire
         content_new, _ = gen.autoencoder_a.encode(img)
         loss += weight_recon * torch.nn.functional.l1_loss(content_new, content)
-        #
-        # L1 loss on black and white image
-        # bw = torch.ones(1).to(img.device)
-        # image_bw = apply_black_white(orig_image, bw)
-        # output_bw = apply_black_white(img, bw)
-        # loss += weight_recon * torch.nn.functional.l1_loss(output_bw, image_bw)
-        #
-        # Clip loss
-        # loss += weight_recon * compute_clip_loss(orig_image, img)
+
 
     return loss
 
