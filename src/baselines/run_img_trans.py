@@ -5,13 +5,10 @@ from enum import Enum
 from tqdm.auto import tqdm
 from torchvision import transforms
 
-from datasets.LDLDatasetPCLabeled import LDLDatasetPCLabeled
-from datasets.ImageDirectoryDataset import ImageDirectoryDataset
 from datasets.CocoCaptions import CocoCaptions
 
 from baselines.image_transformations.image_transformations import *
 from baselines.utils import plot_imgs_tensor, interweave_batch_tensors
-from baselines.losses.CompoundEmotionLoss import CompoundEmotionLoss
 from baselines.losses.ValenceArousalLoss import ValenceArousalLoss
 
 

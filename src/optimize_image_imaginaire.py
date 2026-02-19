@@ -17,12 +17,14 @@ from external.imaginaire.generators.munit import Generator
 from external.imaginaire.losses.gan import GANLoss
 from external.imaginaire.config import Config
 
-from paths import COCO_DIR, IMAGINAIRE_OUTPUT_DIR
+from paths import PROJECT_ROOT, COCO_DIR, MODELS_DIR, OUT_DIR
 
 
 STATS = {}
-
-output_path = IMAGINAIRE_OUTPUT_DIR
+VA_MODEL = MODELS_DIR / "va_pred_all"
+IMAGINAIRE_MODEL = MODELS_DIR / "imaginaire_munit_200000_s5.pt"
+IMAGINAIRE_CONFIG = PROJECT_ROOT / "src/external/imaginaire/imagenet2imagenet.yaml"
+OUTPUT_PATH = OUT_DIR / "imaginaire"
 
 def main():
     # parameters
@@ -52,7 +54,7 @@ def main():
     # parameters: end
 
     # inputs
-    va_loss = ValenceArousalLoss("models/va_pred_all", device, 1,
+    va_loss = ValenceArousalLoss(f"{VA_MODEL}", device, 1,
                                  is_input_range_0_1=False, is_minimized=True, requires_grad=not is_gradient_free)
     eval_params = {"emotion_type_labels": None}
 
@@ -60,7 +62,6 @@ def main():
     data_transforms = transforms.Compose([
         transforms.Resize(input_size),
         transforms.CenterCrop(crop_size),
-        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
     ])
@@ -70,9 +71,9 @@ def main():
     dataset_test = CocoCaptions(COCO_DIR, "val", data_transforms)
     data_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=0)
 
-    cfg = Config("munit/imagenet2imagenet.yaml")
+    cfg = Config(IMAGINAIRE_CONFIG)
     gen = Generator(cfg.gen, cfg.data)
-    state_dict = torch.load("models/imaginaire_munit_200000_s5.pt")
+    state_dict = torch.load(IMAGINAIRE_MODEL)
     gen_sate_dict = get_relevant_states(state_dict['net_G'])
     gen.load_state_dict(gen_sate_dict)
     gen = gen.to(device)
@@ -87,7 +88,7 @@ def main():
         gan_loss = GANLoss(cfg.trainer.gan_mode)
 
     for weight_clf in weight_clf_list:
-        output_path_i = f'{output_path}/weight_{weight_clf:<1.2f}'
+        output_path_i = f'{OUTPUT_PATH}/weight_{weight_clf:<1.2f}'
 
         if not os.path.exists(output_path_i):
             os.makedirs(output_path_i)

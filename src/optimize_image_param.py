@@ -16,12 +16,13 @@ from baselines.optimize_image import optimize_images, compute_clip_loss
 from baselines.run_img_trans import compare_emotions
 from baselines.utils import check_init_stats_adapt, print_stats, is_local, get_str_timestamp
 
-from paths import COCO_DIR, OPTIMIZED_OUTPUT_DIR
+from paths import COCO_DIR, MODELS_DIR, OUT_DIR
 
 STATS = {}
 OUTPUT_TRANSFORM = None
 
-output_path = OPTIMIZED_OUTPUT_DIR
+OUTPUT_PATH = OUT_DIR / "optimized_param"
+VA_MODEL = MODELS_DIR / "va_pred_all"
 
 
 def main():
@@ -58,7 +59,7 @@ def main():
     # parameters: end
 
     # inputs
-    va_loss = ValenceArousalLoss("models/va_pred_all", device, 1,
+    va_loss = ValenceArousalLoss(f"{VA_MODEL}", device, 1,
                                  is_minimized=True, requires_grad=not is_gradient_free)
     eval_params = {"emotion_type_labels": None}
     # va_loss = ValenceArousalLoss("trained_models/EmoNet_valence_moments_resnet50_5_best.pth.tar",
@@ -97,7 +98,7 @@ def main():
         net = net.to(device)
 
     for weight_clf in weight_clf_list:
-        output_path_i = f'{output_path}_{weight_clf:<1.2f}'
+        output_path_i = f'{OUTPUT_PATH}_{weight_clf:<1.2f}'
 
         if not os.path.exists(output_path_i):
             os.makedirs(output_path_i)
