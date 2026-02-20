@@ -73,7 +73,7 @@ class InversionResamplingDiffusionPipeline:
 
     def revert_and_sample(self, image: Image, caption: str, end_iteration: int, params: dict,
                           guidance_classifier: object = None, callback_resampling=None,
-                          callback_outputs=None) -> (Image, dict):
+                          callback_outputs=None) -> tuple[Image, dict]:
         end_iteration = end_iteration if end_iteration is not None else self.num_inversion_steps
         start_iteration = (0 if self.num_inference_steps != self.num_inversion_steps
                            else self.num_inference_steps - end_iteration)
@@ -165,8 +165,8 @@ class InversionResamplingDiffusionPipeline:
 
             optimizer = torch.optim.Adam([uncond_embeddings], lr=base_lr * (1. - i / 100.))
             criterion = torch.nn.MSELoss()
-            scaler = torch.cuda.amp.GradScaler(enabled=is_sdxl)
-            # scaler = torch.amp.GradScaler('cuda', enabled=is_sdxl)
+            #scaler = torch.cuda.amp.GradScaler(enabled=is_sdxl)
+            scaler = torch.amp.GradScaler('cuda', enabled=is_sdxl)
 
             latent_prev = self.pivot_latents[len(self.pivot_latents) - i - 2]
             t = self.pipe.scheduler.timesteps[i]
