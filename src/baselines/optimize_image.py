@@ -105,7 +105,7 @@ def read_yaml(yaml_file_path):
 
 def save_output(directory, image_path, image_orig_tensor, image_adapted_tensor, adaptation_flag, save_orig_img=True):
     to_pil = transforms.ToPILImage()
-    image_name = image_path.split("/")[-1].replace(".jpg", "")
+    image_name = image_path[0].split("/")[-1].replace(".jpg", "")
     if save_orig_img:
         orig_img_path = f'{directory}/{image_name}.jpg'
         img_adapted_path = f'{directory}/{image_name}_{adaptation_flag}.jpg'

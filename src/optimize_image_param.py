@@ -7,7 +7,7 @@ import PIL.Image
 import torch.nn as nn
 from torchvision import transforms
 
-from datasets.CocoCaptions import CocoCaptions
+from datasets.Dataloader import Dataloader
 
 from baselines.image_transformations.image_transformations import apply_params
 from baselines.losses.ValenceArousalLoss import ValenceArousalLoss
@@ -16,7 +16,7 @@ from baselines.optimize_image import optimize_images, compute_clip_loss
 from baselines.run_img_trans import compare_emotions
 from baselines.utils import check_init_stats_adapt, print_stats, is_local, get_str_timestamp
 
-from paths import COCO_DIR, MODELS_DIR, OUT_DIR
+from paths import DATA_DIR, MODELS_DIR, OUT_DIR
 
 STATS = {}
 OUTPUT_TRANSFORM = None
@@ -84,7 +84,7 @@ def main():
 
 
 
-    dataset_test = CocoCaptions(COCO_DIR, "val", data_transforms)
+    dataset_test = Dataloader(DATA_DIR)
     data_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=0)
 
     net = None
@@ -301,7 +301,8 @@ def output_transform(image, x_opt, obj_params, eval_params, adaptation, image_pa
     check_init_stats_adapt(STATS, adaptation)
     compare_emotions(obj_params["clf"], image, outputs[-1], eval_params["emotion_type_labels"], STATS[adaptation])
 
-    input_image = PIL.Image.open(image_path)
+    print(f"{DATA_DIR}/images/{image_path[0]}")
+    input_image = PIL.Image.open(f"{DATA_DIR}/images/{image_path[0]}")
     if input_image.mode != "RGB":
         input_image = input_image.convert('RGB')
 

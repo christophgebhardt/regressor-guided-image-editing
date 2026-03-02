@@ -9,9 +9,9 @@ from adapt_images.adapter import ImageAdapter
 from adapt_images.output import OutputImageManager
 from guidance_classifier.ValenceArousalMidu import ValenceArousalMidu
 from pipelines.InversionResamplingStableDiffusionPipeline import InversionResamplingStableDiffusionPipeline
-from datasets.CocoCaptions import CocoCaptions
+from datasets.Dataloader import Dataloader
 
-from paths import MODELS_DIR, COCO_DIR, OUT_DIR
+from paths import MODELS_DIR, DATA_DIR, OUT_DIR
 
 VA_MODEL = MODELS_DIR / "clf_new_params_midu_va_512_2024_07_11_09_10_03"
 OUTPUT_PATH = OUT_DIR / "adapted_images"
@@ -25,7 +25,7 @@ def main():
     scorer = ImageScorer(pipe)
     output_manager = OutputImageManager(scorer, OUTPUT_PATH)
     adapter = ImageAdapter(pipe, scorer)
-    dataset = CocoCaptions(COCO_DIR, "val", None)
+    dataset = Dataloader(DATA_DIR)
 
     adapt_images(
         dataset = dataset,

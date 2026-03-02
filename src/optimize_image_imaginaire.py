@@ -5,7 +5,7 @@ import sys
 import torch
 from torchvision import transforms
 
-from datasets.CocoCaptions import CocoCaptions
+from datasets.Dataloader import Dataloader
 
 from baselines.losses.ValenceArousalLoss import ValenceArousalLoss
 from baselines.optimize_image import optimize_images
@@ -17,7 +17,7 @@ from external.imaginaire.generators.munit import Generator
 from external.imaginaire.losses.gan import GANLoss
 from external.imaginaire.config import Config
 
-from paths import PROJECT_ROOT, COCO_DIR, MODELS_DIR, OUT_DIR
+from paths import PROJECT_ROOT, DATA_DIR, MODELS_DIR, OUT_DIR
 
 
 STATS = {}
@@ -68,7 +68,7 @@ def main():
 
 
 
-    dataset_test = CocoCaptions(COCO_DIR, "val", data_transforms)
+    dataset_test = Dataloader(DATA_DIR, data_transforms)
     data_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=0)
 
     cfg = Config(IMAGINAIRE_CONFIG)
