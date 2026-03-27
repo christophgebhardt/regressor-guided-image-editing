@@ -1,0 +1,22 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04
+
+%files
+    pyproject.toml /opt/project/pyproject.toml
+    uv.lock        /opt/project/uv.lock
+
+%post
+    apt-get update && apt-get install -y python3 python3-pip curl git
+
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="/root/.local/bin:$PATH"
+
+    cd /opt/project
+    uv sync --frozen
+
+%environment
+    export PATH="/root/.local/bin:$PATH"
+    export PATH="/opt/project/.venv/bin:$PATH"
+
+%runscript
+    python "$@"
