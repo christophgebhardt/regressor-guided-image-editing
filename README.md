@@ -11,5 +11,10 @@ The repository builds upon imaginaire: https://github.com/NVlabs/imaginaire
 2. Install `uv`
     - ``curl -LsSf https://astral.sh/uv/install.sh | sh``
 
-3. Run scripts from the src folder
+3. Change paths.py to point to the correct folders:
+    - models
+    - data
+    - out
+
+4. Run scripts from the src folder
 - ``./[script_name.py]``

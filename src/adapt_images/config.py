@@ -2,16 +2,17 @@ from dataclasses import dataclass
 
 @dataclass
 class AdaptConfig:
-    num_inversion_steps: int = 5
-    num_inference_steps: int = 5
+    num_inversion_steps: int = 50
+    num_inference_steps: int = 50
     end_iteration: int = num_inversion_steps
     normalize_gradient: bool = True
     scheduler_type: str = "ddim"
     save_orig: bool = False
+    is_xl: bool = True
 
 @dataclass
 class GuidanceConfig:
-    clf_scale: float = 0.2
+    clf_scale: float = 0.1
     reference_value: float | None = None
     prompt: str = ""
     negative_prompt: str = ""

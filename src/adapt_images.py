@@ -9,6 +9,7 @@ from adapt_images.adapter import ImageAdapter
 from adapt_images.output import OutputImageManager
 from guidance_classifier.ValenceArousalMidu import ValenceArousalMidu
 from pipelines.InversionResamplingStableDiffusionPipeline import InversionResamplingStableDiffusionPipeline
+from pipelines.InversionResamplingStableDiffusionXLPipeline import InversionResamplingStableDiffusionXLPipeline
 from datasets.Dataloader import Dataloader
 
 from paths import MODELS_DIR, DATA_DIR, OUT_DIR
@@ -16,10 +17,15 @@ from paths import MODELS_DIR, DATA_DIR, OUT_DIR
 VA_MODEL = MODELS_DIR / "clf_new_params_midu_va_512_2024_07_11_09_10_03"
 OUTPUT_PATH = OUT_DIR / "adapted_images"
 
+# for the conifg variable is_xl
+PIPELINE_CLASSES = {
+    True:  InversionResamplingStableDiffusionXLPipeline,
+    False: InversionResamplingStableDiffusionPipeline,
+}
 
 def main():
     adapt_config = AdaptConfig()
-    guidance_config = GuidanceConfig(clf_scale=0.2)
+    guidance_config = GuidanceConfig()
 
     pipe = create_pipeline(adapt_config, VA_MODEL)
     scorer = ImageScorer(pipe)
@@ -36,23 +42,20 @@ def main():
     )
 
 
-
 def create_pipeline(config: AdaptConfig, model_path: Path):
-    pipe = InversionResamplingStableDiffusionPipeline(
-        num_inference_steps = config.num_inference_steps,
-        num_inversion_steps = config.num_inversion_steps,
-        normalize_gradient = config.normalize_gradient,
-        scheduler_type = config.scheduler_type,
+    cls = PIPELINE_CLASSES[config.is_xl]
+    pipe = cls(
+        num_inference_steps=config.num_inference_steps,
+        num_inversion_steps=config.num_inversion_steps,
+        normalize_gradient=config.normalize_gradient,
+        scheduler_type=config.scheduler_type,
     )
-
     pipe.guidance_classifier = ValenceArousalMidu(
         pipe = pipe.pipe,
         device = pipe.device,
         ckp_path = f"{model_path}")
 
     return pipe
-
-
 
 def adapt_images(
         dataset,
@@ -62,7 +65,7 @@ def adapt_images(
         end_iteration
     ):
 
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0)
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
 
     for ix, (_, data) in enumerate(data_loader):
         print(f"[ {ix + 1} / {len(data_loader.dataset)} ]: {data[0][0]}")
