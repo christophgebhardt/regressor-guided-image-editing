@@ -1,12 +1,14 @@
 Bootstrap: docker
-From: nvcr.io/nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04
+From: nvcr.io/nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04
 
 %files
     pyproject.toml /opt/project/pyproject.toml
     uv.lock        /opt/project/uv.lock
 
 %post
-    apt-get update && apt-get install -y curl git
+    apt-get update && apt-get install -y \
+        curl \
+        git
 
     # install uv
     curl -LsSf https://astral.sh/uv/install.sh | sh

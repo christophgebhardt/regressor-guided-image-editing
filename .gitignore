@@ -215,3 +215,6 @@ out/
 
 # apptainer images
 *.sif
+
+# data
+data/

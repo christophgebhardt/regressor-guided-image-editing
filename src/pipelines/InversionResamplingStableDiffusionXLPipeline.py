@@ -15,7 +15,7 @@ class InversionResamplingStableDiffusionXLPipeline(InversionResamplingDiffusionP
     def __init__(self, num_inference_steps: int, num_inversion_steps: int = None, pipe_path: str = "stabilityai/stable-diffusion-xl-base-1.0",
                  device: str = 'cuda', scheduler_type: str = 'dpm', normalize_gradient: bool = True):
         # Load the SD pipeline and add a hook
-        super().__init__(num_inference_steps, num_inversion_steps, 1024, device, normalize_gradient)
+        super().__init__(num_inference_steps, num_inversion_steps, 768, device, normalize_gradient)
         self.pipe = StableDiffusionXLPipeline.from_pretrained(pipe_path, torch_dtype=torch.float16, variant="fp16",
                                                               use_safetensors=True).to(device)
         if scheduler_type == 'dpm':

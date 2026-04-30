@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Union
 
 @dataclass
 class AdaptConfig:
@@ -13,7 +14,7 @@ class AdaptConfig:
 @dataclass
 class GuidanceConfig:
     clf_scale: float = 0.2
-    reference_value: float | None = None
+    reference_value: Union[float, None] = None
     prompt: str = ""
     negative_prompt: str = ""
     cfg_scale: float = 2.0
